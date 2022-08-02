@@ -1,17 +1,16 @@
 import { Button, Grid, Typography } from "@mui/material";
-import { Container } from "@mui/system";
-import axios from "axios";
+import { callApi } from "../../hooks/useApi";
 import { Field, Form, Formik } from "formik";
 import { TextField } from "formik-mui";
 import { useNavigate } from "react-router-dom";
+import FormContainer from "../../components/FormContainer";
 
 export default function Registration() {
 
     const navigate = useNavigate();
 
     return(
-    <Container maxWidth="sm">
-        <Typography variant="h3" marginTop={3} marginBottom={3}>Registration</Typography>
+    <FormContainer formTitle={"Registration"}>
         <Formik initialValues={{name: '', password: '', password2: ''}}
          validate={(values)=>{
             const errors = {};
@@ -25,22 +24,20 @@ export default function Registration() {
             }
 
             if (!values.password2) {
+
                 errors.password2 = "Required";
             }
-
-            if (values.password!==values.password2) {
-                errors.password = "Passwords don't match";
-                errors.password2 = "Passwords don't match";
-            }
+            else {
+                if (values.password!==values.password2) {
+                    errors.password = "Passwords don't match";
+                    errors.password2 = "Passwords don't match";
+                }
+            } 
 
             return errors;
          }}
          onSubmit={(values, {setSubmitting, setFieldError}) => {
-            axios({
-                method: 'post',
-                url: 'https://wallet.atoth.workers.dev/reg',
-                data: values
-            }).then(_unUsedResponse => {
+            callApi('post', '/reg', values).then(_unUsedResponse => {
                 setSubmitting(false);
                 navigate("/login");
             }).catch(error => {
@@ -80,6 +77,6 @@ export default function Registration() {
                 <Button size="small" fullWidth onClick={()=>navigate("/login")}>Login Here</Button>
             </Grid>
         </Grid>
-    </Container>
+    </FormContainer>
     );
 }

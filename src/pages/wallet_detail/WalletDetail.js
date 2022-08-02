@@ -1,11 +1,15 @@
-import { Button, Chip, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Button, Chip, Grid, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import axios from "axios";
+import { callApi } from "../../hooks/useApi";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import fnConvertDate from "../../components/fnConvertDate";
 import { useAuth } from "../../hooks/useAuth";
 import AddIcon from '@mui/icons-material/Add';
 import ShareIcon from '@mui/icons-material/Share';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+
 
 export default function WalletDetail() {
 
@@ -56,8 +60,16 @@ export default function WalletDetail() {
     }, [authToken, id]);
 
     return (<>
-        <Typography variant="h4" marginTop={3} marginBottom={3}>{wallet.name}</Typography>
-        <Typography variant="subtitle2" marginTop={3} marginBottom={3}>{wallet.description}</Typography>
+        <Typography variant="h4" marginTop={3} marginBottom={3}>
+            {wallet.name}
+        </Typography>
+        <Typography variant="subtitle2" marginTop={3} marginBottom={3}>
+            {wallet.description} 
+            <IconButton color="primary" size="small" 
+             onClick={() => navigate(`/wallet/${wallet.id}/edit`)}>
+                <EditIcon />
+            </IconButton>
+        </Typography>
         <Grid container spacing={1}>
             <Grid item xs={12}>
                 <Typography variant="h6">Contributors</Typography>
@@ -65,11 +77,18 @@ export default function WalletDetail() {
             <Grid item alignContent={"middle"}>
                     {accessUsers.map(element => {
                         return(
-                            <Chip sx={{ml: 0.5, mr: 0.5}} label={element.name} />
+                            <Chip key={element.id} sx={{ml: 0.5, mr: 0.5}} 
+                             label={element.name} 
+                             onDelete={() => {
+                                navigate(`/wallet/${id}/remove_access/${element.id}`);
+                            }}/>
                     );})}
             </Grid>
             <Grid item>
-                <Button onClick={()=>navigate(`/wallet/${id}/share`)} startIcon={<ShareIcon />} >Share</Button>
+                <Button onClick={()=>navigate(`/wallet/${id}/share`)} 
+                 startIcon={<ShareIcon />}>
+                    Share
+                </Button>
             </Grid>
         </Grid>
         <Typography variant="h5" marginTop={10}>Transactions</Typography>
@@ -103,6 +122,7 @@ export default function WalletDetail() {
                         <TableCell align="right">
                             <Typography variant="h6">Created At</Typography>
                         </TableCell>
+                        <TableCell></TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -110,36 +130,61 @@ export default function WalletDetail() {
                         return (
                             <TableRow key={element.id}>
                                 <TableCell><b>{element.title}</b></TableCell>
-                                <TableCell align="right">€{element.amount}</TableCell>
-                                <TableCell align="right">{element.created_by.name}</TableCell>
-                                <TableCell align="right">{fnConvertDate(element.created_at)}</TableCell>
+                                <TableCell align="right">
+                                    €{element.amount}
+                                </TableCell>
+                                <TableCell align="right">
+                                    {element.created_by.name}
+                                </TableCell>
+                                <TableCell align="right">
+                                    {fnConvertDate(element.created_at)}
+                                </TableCell>
+                                <TableCell align="center">
+                                        <IconButton size="small" 
+                                         onClick={() => {
+                                            navigate(`/transaction/${element.id}/edit`);
+                                         }}>
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton color="error" size="small" 
+                                         onClick={() => {
+                                            navigate(`/transaction/${element.id}/delete`);
+                                         }}>
+                                            <DeleteIcon />
+                                        </IconButton>
+                                </TableCell>
                             </TableRow>
                         );
                     })}
                     {hasMoreTransaction === true && (
                         <TableRow>
-                            <TableCell colSpan={4}>
+                            <TableCell colSpan={5}>
                                 <Button size="small" fullWidth onClick={()=>{
-                                    axios({
-                                        method: 'post',
-                                        url: 'https://wallet.atoth.workers.dev/transactions',
-                                        headers: {'Authorization': 'Bearer ' + authToken},
-                                        data: {wallet_id: id, limit: 5, cursor: cursor}
-                                    }).then(response => {
-
-                                        console.log(response.data);
-                                        setTransactionList([...transactionList, ...response.data.transactions]);
-                                        setHasMoreTransaction(response.data.has_more);
-                                        if (response.data.cursor) {
-                                            setCursor(response.data.cursor);
-                                        }
-
+                                    callApi('post', 
+                                            '/transactions',
+                                            {
+                                                wallet_id: id, 
+                                                limit: 5, 
+                                                cursor: cursor
+                                            },
+                                            authToken
+                                    ).then(
+                                        response => {
+                                            setTransactionList(
+                                                [
+                                                ...transactionList, 
+                                                ...response.data.transactions
+                                                ]);
+                                            setHasMoreTransaction(response.data.has_more);
+                                            if (response.data.cursor) {
+                                                setCursor(response.data.cursor);
+                                            }
                                     }).catch(error => {
-
                                         console.error(error.response.data);
-
                                     });
-                                }}>Load more transaction</Button>
+                                }}>
+                                    Load more transaction
+                                </Button>
                             </TableCell>
                         </TableRow>  
                     )}

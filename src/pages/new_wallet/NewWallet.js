@@ -1,10 +1,10 @@
-import { Button, Grid, Typography } from "@mui/material";
-import { Container } from "@mui/system";
-import axios from "axios";
+import { Alert, Button, Grid } from "@mui/material";
 import { Field, Form, Formik } from "formik";
 import { TextField } from "formik-mui";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { callApi } from "../../hooks/useApi";
+import FormContainer from "../../components/FormContainer";
 
 export default function NewWallet() {
 
@@ -12,47 +12,65 @@ export default function NewWallet() {
     const { authToken } = useAuth();
 
     return(
-    <Container maxWidth="sm">
-        <Typography variant="h3" marginTop={3} marginBottom={3}>New Wallet</Typography>
-        <Formik initialValues={{name: '', description: '', extra: {}}} 
-         onSubmit={(values, {setSubmitting}) => {
+    <FormContainer formTitle={"New Wallet"}>
+        <Formik initialValues={{name: '', description: '', extra: {}}}
+         validate={(values)=>{
+            const errors = {};
 
-            console.log(values);
+            if (!values.name) {
+                errors.name = "Required";
+            }
 
-            axios({
-                method: 'put',
-                url: 'https://wallet.atoth.workers.dev/wallet',
-                data: values,
-                headers: {'Authorization': 'Bearer ' + authToken}
-            }).then(response => {
+            if (!values.description) {
+                errors.description = "Required";
+            }
 
-                console.log(response);
+            return errors;
+         }}
+         onSubmit={(values, {setSubmitting, setStatus}) => {
 
-                setSubmitting(false);
-                navigate("/mywallets");
-
+            callApi('put', '/wallet', values, authToken).then(
+                _unusedResponseData => {
+                    setSubmitting(false);
+                    navigate("/mywallets");
             }).catch(error => {
-
-                console.error(error.response.data.error);
-
+                setStatus(error.response.data.error);
                 setSubmitting(false);
             });
 
          }}>
+            {({ isSubmitting, status }) => (
             <Form>
                 <Grid container spacing={2}>
+                    { status && 
                     <Grid item xs={12}>
-                        <Field component={TextField} name="name" label="Wallet Name" type="text" fullWidth />
+                        <Alert severity="error">{status}</Alert>
+                    </Grid>
+                    }
+                    <Grid item xs={12}>
+                        <Field component={TextField} name="name" 
+                         label="Wallet Name" type="text" fullWidth />
                     </Grid>
                     <Grid item xs={12}>
-                        <Field component={TextField} name="description" label="Wallet Description" type="text" fullWidth />
+                        <Field component={TextField} name="description" 
+                         label="Wallet Description" type="text" fullWidth />
                     </Grid>
                     <Grid item xs={12}>
-                        <Button type="submit" variant="contained" fullWidth>Create Wallet</Button>
+                        <Button type="submit" variant="contained" fullWidth 
+                         disabled={isSubmitting}>
+                            Create Wallet
+                        </Button>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Button  variant="outlined" fullWidth
+                         onClick={() => navigate('/mywallets')}>
+                            Cancel
+                        </Button>
                     </Grid>
                 </Grid>
             </Form>
+            )}
         </Formik>
-    </Container>
+    </FormContainer>
     );
 }

@@ -1,63 +1,73 @@
-import { Button, Grid, Typography } from "@mui/material";
-import { Container } from "@mui/system";
-import axios from "axios";
+import { Button, Grid } from "@mui/material";
+import { callApi } from "../../hooks/useApi";
 import { Field, Form, Formik } from "formik";
 import { TextField } from "formik-mui";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import FormContainer from "../../components/FormContainer";
 
 export default function ShareWallet() {
 
     const { id } = useParams();
     const { authToken } = useAuth();
+    const navigate = useNavigate();
 
-    return (<Container maxWidth="sm">
-        <Typography variant="h3" marginTop={3} marginBottom={3}>Share Wallet</Typography>
-        <Formik initialValues={{name: ''}} onSubmit={(values, {setSubmitting})=>{
+    return (
+    <FormContainer formTitle={"Share Wallet"}>
+        <Formik initialValues={{name: ''}} 
+         validate={(values)=>{
+            const errors = {};
 
-            console.log(values);
+            if (!values.name) {
+                errors.name = "Required";
+            }
 
-            axios({
-                method: 'post',
-                url: 'https://wallet.atoth.workers.dev/user/search',
-                data: values,
-                headers: {'Authorization': 'Bearer ' + authToken}
-            }).then(response => {
+            return errors;
+         }}
+        onSubmit={
+            (values, {setSubmitting, setFieldError}) => {
 
-                console.log(response);
-
-                const user_id = response.data;
-                axios({
-                    method: 'post',
-                    url: `https://wallet.atoth.workers.dev/wallet/${id}/grant_access`,
-                    data: {user_id: user_id},
-                    headers: {'Authorization': 'Bearer ' + authToken}
-                }).then(response => {
-
-                    console.log(response);
-                    
+                callApi('post', '/user/search', values, authToken
+                ).then(
+                    response => {
+                        const user_id = response.data;
+                        callApi('post',
+                                `/wallet/${id}/grant_access`,
+                                {user_id: user_id},
+                                authToken
+                                ).then(response => {
+                                    setSubmitting(false);
+                                    navigate(`/wallet/${id}`);
+                                }).catch(error => {
+                                    setSubmitting(false);
+                                    setFieldError("name", 
+                                        error.response.data.error);
+                                });
                 }).catch(error => {
-
-                    console.error(error.response.data.error);
-
-                });
-            }).catch(error => {
-
-                console.error(error.response.data.error);
-
-                setSubmitting(false);
+                    setSubmitting(false);
+                    setFieldError("name", error.response.data.error);
             });
         }}>
             <Form>
                 <Grid container spacing={2}>
                     <Grid item xs={12}>
-                        <Field component={TextField} name="name" label="Username" type="text" fullWidth />
+                        <Field component={TextField} name="name" 
+                         label="Username" type="text" fullWidth />
                     </Grid>
                     <Grid item xs={12}>
-                        <Button type="submit" variant="contained" fullWidth>Share Wallet</Button>
+                        <Button type="submit" variant="contained" fullWidth>
+                            Share Wallet
+                        </Button>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Button variant="outlined" fullWidth 
+                         onClick={()=>navigate(`/wallet/${id}`)}>
+                            Cancel
+                        </Button>
                     </Grid>
                 </Grid>
             </Form>
         </Formik>
-    </Container>);
+    </FormContainer>
+    );
 }
