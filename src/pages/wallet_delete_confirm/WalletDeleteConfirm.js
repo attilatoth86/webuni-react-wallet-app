@@ -5,7 +5,7 @@ import FormContainer from "../../components/FormContainer";
 import { callApi } from "../../hooks/useApi";
 import { useAuth } from "../../hooks/useAuth";
 
-export default function DeleteWalletConfirm() {
+export default function WalletDeleteConfirm() {
 
     const { id } = useParams();
     const navigate = useNavigate();

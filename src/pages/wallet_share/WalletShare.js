@@ -6,7 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import FormContainer from "../../components/FormContainer";
 
-export default function ShareWallet() {
+export default function WalletShare() {
 
     const { id } = useParams();
     const { authToken } = useAuth();

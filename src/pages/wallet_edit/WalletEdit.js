@@ -7,7 +7,7 @@ import FormContainer from "../../components/FormContainer";
 import { callApi } from "../../hooks/useApi";
 import { useAuth } from "../../hooks/useAuth";
 
-export default function EditWallet() {
+export default function WalletEdit() {
 
     const { id } = useParams();
     const navigate = useNavigate();

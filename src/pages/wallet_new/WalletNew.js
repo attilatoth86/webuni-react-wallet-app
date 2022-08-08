@@ -6,7 +6,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { callApi } from "../../hooks/useApi";
 import FormContainer from "../../components/FormContainer";
 
-export default function NewWallet() {
+export default function WalletNew() {
 
     const navigate = useNavigate();
     const { authToken } = useAuth();

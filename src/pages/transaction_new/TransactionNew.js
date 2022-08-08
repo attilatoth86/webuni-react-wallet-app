@@ -7,7 +7,7 @@ import { callApi } from "../../hooks/useApi";
 import FormContainer from "../../components/FormContainer";
 
 
-export default function NewTransaction() {
+export default function TransactionNew() {
 
     const { id } = useParams();
     const navigate = useNavigate();

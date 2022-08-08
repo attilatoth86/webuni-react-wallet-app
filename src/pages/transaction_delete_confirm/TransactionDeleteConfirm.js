@@ -7,7 +7,7 @@ import { callApi } from "../../hooks/useApi";
 import { useAuth } from "../../hooks/useAuth";
 import FormContainer from "../../components/FormContainer";
 
-export default function DeleteTransactionConfirm() {
+export default function TransactionDeleteConfirm() {
 
     const navigate = useNavigate();
     const { transaction_id } = useParams();
