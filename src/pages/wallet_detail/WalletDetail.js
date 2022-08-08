@@ -1,14 +1,12 @@
-import { Button, Chip, Grid, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
-import axios from "axios";
+import { Button, Chip, Grid, IconButton, Typography } from "@mui/material";
 import { callApi } from "../../hooks/useApi";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import fnConvertDate from "../../components/fnConvertDate";
 import { useAuth } from "../../hooks/useAuth";
 import AddIcon from '@mui/icons-material/Add';
 import ShareIcon from '@mui/icons-material/Share';
-import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import TransactionTable from "./components/TransactionTable";
 
 
 export default function WalletDetail() {
@@ -22,14 +20,8 @@ export default function WalletDetail() {
     const [cursor, setCursor] = useState(false);
     const navigate = useNavigate();
 
-    useEffect(()=>{
-        axios({
-            method: 'get',
-            url: `https://wallet.atoth.workers.dev/wallet/${id}`,
-            headers: {'Authorization': 'Bearer ' + authToken}
-        }).then(response => {
-
-            console.log(response.data);
+    useEffect(() => {
+        callApi('get', `/wallet/${id}`, undefined, authToken).then(response => {
 
             setWallet(response.data);
             setAccessUsers(response.data.access);
@@ -38,16 +30,12 @@ export default function WalletDetail() {
             console.error(error.response.data);
         });
 
-        axios({
-            method: 'post',
-            url: 'https://wallet.atoth.workers.dev/transactions',
-            headers: {'Authorization': 'Bearer ' + authToken},
-            data: {wallet_id: id, limit: 5, cursor: ''}
-        }).then(response => {
+        callApi('post', '/transactions', {wallet_id: id, limit: 5, cursor: ''}, 
+        authToken).then(response => {
 
-            console.log(response.data);
             setTransactionList(response.data.transactions);
             setHasMoreTransaction(response.data.has_more);
+
             if (response.data.cursor) {
                 setCursor(response.data.cursor);
             }
@@ -105,92 +93,32 @@ export default function WalletDetail() {
                 </Button>
             </Grid>
         </Grid>
-        
-        <TableContainer component={Paper}>
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>
-                            <Typography variant="h6">Title</Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                            <Typography variant="h6">Amount</Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                            <Typography variant="h6">Created By</Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                            <Typography variant="h6">Created At</Typography>
-                        </TableCell>
-                        <TableCell></TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {transactionList.map(element => {
-                        return (
-                            <TableRow key={element.id}>
-                                <TableCell><b>{element.title}</b></TableCell>
-                                <TableCell align="right">
-                                    €{element.amount}
-                                </TableCell>
-                                <TableCell align="right">
-                                    {element.created_by.name}
-                                </TableCell>
-                                <TableCell align="right">
-                                    {fnConvertDate(element.created_at)}
-                                </TableCell>
-                                <TableCell align="center">
-                                        <IconButton size="small" 
-                                         onClick={() => {
-                                            navigate(`/transaction/${element.id}/edit`);
-                                         }}>
-                                            <EditIcon />
-                                        </IconButton>
-                                        <IconButton color="error" size="small" 
-                                         onClick={() => {
-                                            navigate(`/transaction/${element.id}/delete`);
-                                         }}>
-                                            <DeleteIcon />
-                                        </IconButton>
-                                </TableCell>
-                            </TableRow>
-                        );
-                    })}
-                    {hasMoreTransaction === true && (
-                        <TableRow>
-                            <TableCell colSpan={5}>
-                                <Button size="small" fullWidth onClick={()=>{
-                                    callApi('post', 
-                                            '/transactions',
-                                            {
-                                                wallet_id: id, 
-                                                limit: 5, 
-                                                cursor: cursor
-                                            },
-                                            authToken
-                                    ).then(
-                                        response => {
-                                            setTransactionList(
-                                                [
-                                                ...transactionList, 
-                                                ...response.data.transactions
-                                                ]);
-                                            setHasMoreTransaction(response.data.has_more);
-                                            if (response.data.cursor) {
-                                                setCursor(response.data.cursor);
-                                            }
-                                    }).catch(error => {
-                                        console.error(error.response.data);
-                                    });
-                                }}>
-                                    Load more transaction
-                                </Button>
-                            </TableCell>
-                        </TableRow>  
-                    )}
-                </TableBody>
-            </Table>
-        </TableContainer>
-        <br/>
+        <TransactionTable
+         transactionList={transactionList} 
+         hasMoreTransaction={hasMoreTransaction}
+         onClickLoadMore={() => {
+            callApi('post', 
+                    '/transactions',
+                    {
+                        wallet_id: id, 
+                        limit: 5, 
+                        cursor: cursor
+                    },
+                    authToken
+            ).then(response => {
+                    setTransactionList(
+                        [
+                        ...transactionList, 
+                        ...response.data.transactions
+                        ]);
+                    setHasMoreTransaction(response.data.has_more);
+                    if (response.data.cursor) {
+                        setCursor(response.data.cursor);
+                    }
+            }).catch(error => {
+                console.error(error.response.data);
+            });
+            }
+         } />
     </>);
 }
