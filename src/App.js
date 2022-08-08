@@ -15,6 +15,7 @@ import RevokeAccessConfirm from "./pages/wallet_revoke_access_confirm/RevokeAcce
 import WalletShare from "./pages/wallet_share/WalletShare";
 import WalletDetail from "./pages/wallet_detail/WalletDetail";
 import Providers from "./Providers";
+import Page404 from "./pages/page404/Page404";
 
 
 function ProtectedPage({children}) {
@@ -83,6 +84,7 @@ function App() {
               <ProtectedPage>
                 <TransactionDeleteConfirm/>
               </ProtectedPage>}/>
+            <Route path="*" element={<Page404/>}/>
           </Routes>
         </Container>
       </Providers>
